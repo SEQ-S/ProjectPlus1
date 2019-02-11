@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
-import json
+import logging
 import os
+logging.basicConfig(level=os.environ['LOGGING'])
+
+import json
 import requests
 from slackweb import slackweb
 
 ##########
-# 変数定義
-SLACK_URL=os.environ['SLACK_URL']
-SLACK_TOKEN=os.environ['SLACK_TOKEN']
-SLACK_CHANNEL=os.environ['SLACK_CHANNEL']
-
-##########
 # 出勤時
-def begin(w_dict):
+def begin(event, w_dict):
     try:
+        ##########
+        # 変数定義
+        SLACK_URL = event['placementInfo']['attributes']['SLACK_URL']
+        
         ##########
         # メッセージ出力先設定
         slack = slackweb.Slack(url=SLACK_URL)
@@ -60,14 +61,18 @@ def begin(w_dict):
         attachment_list.append(attachment)
         slack.notify(attachments=attachment_list)
     except:
-        print("*** begin:ERR ***")
+        logging.critical("slack.begin:ERR")
 
 
 
 ##########
 # 退勤時時
-def finish(w_dict):
+def finish(event, w_dict):
     try:
+        ##########
+        # 変数定義
+        SLACK_URL = event['placementInfo']['attributes']['SLACK_URL']
+        
         ##########
         # メッセージ出力先設定
         slack = slackweb.Slack(url=SLACK_URL)
@@ -114,16 +119,23 @@ def finish(w_dict):
         attachment_list.append(attachment)
         slack.notify(attachments=attachment_list)
     except:
-        print("*** finish:ERR ***")
-        
+        logging.critical("slack.finish:ERR")
+
 
 ##########
 # ファイルアップロード時
-def upload_file(w_dict):
+def upload_file(event, w_dict):
     try:
         ##########
+        # 変数定義
+        SLACK_TOKEN = event['placementInfo']['attributes']['SLACK_TOKEN']
+        SLACK_CHANNEL = event['placementInfo']['attributes']['SLACK_CHANNEL']
+        EMPLOYEE_NO = event['placementInfo']['attributes']['EMPLOYEE_NO']
+
+        
+        ##########
         # 情報整理
-        files = {'file': open("/tmp/pandas.csv", 'r')}
+        files = {'file': open("/tmp/pandas_" + EMPLOYEE_NO + ".csv", 'r')}
         param = {
             'token':SLACK_TOKEN,
             'channels':SLACK_CHANNEL,
@@ -136,14 +148,5 @@ def upload_file(w_dict):
         # ファイルアップ
         requests.post(url="https://slack.com/api/files.upload",params=param, files=files)
         
-        ##########
-        # ファイルをオープンする
-        test_data = open("/tmp/pandas.csv", "r")
-        # 一行ずつ読み込んでは表示する
-        for line in test_data:
-            print(line)
-        # ファイルをクローズする
-        test_data.close()
-
     except:
-        print("*** upload_file:ERR ***")
+        logging.critical("slack.upload_file:ERR")

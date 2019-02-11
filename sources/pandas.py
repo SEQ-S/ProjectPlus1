@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import logging
+import os
+logging.basicConfig(level=os.environ['LOGGING'])
+
 import sys
 import json
 import boto3
@@ -6,8 +10,12 @@ import pandas as pd
 
 ##########
 # ロング押下時
-def molding(w_list):
+def molding(event, w_list):
     try:
+        ##########
+        # 変数定義
+        EMPLOYEE_NO = event['placementInfo']['attributes']['EMPLOYEE_NO']
+
         ##########
         # list型をpandasに読み込み
         df = pd.io.json.json_normalize(w_list)
@@ -29,11 +37,20 @@ def molding(w_list):
         
         ##########
         # 列を追加する
-        # 日付＝値は開始時間と合わせる
-        # 型をObject⇨datetime
-        df['日付'] = pd.to_datetime(df['開始時刻'])
-        # 型をdatetime⇨date
+        # 日付 ⇨ 値は開始時間と合わせる
+        df['日付'] = df['開始時刻']
+
+        ##########
+        # 型を変換する
+        # object ⇨ datetime ⇨ date
+        df['日付'] = pd.to_datetime(df['日付'])
         df['日付'] = df['日付'].dt.date
+        # object ⇨ datetime ⇨ time
+        df['開始時刻'] = pd.to_datetime(df['開始時刻'])
+        df['開始時刻'] = df['開始時刻'].dt.time
+        # object ⇨ datetime ⇨ time
+        df['終了時刻'] = pd.to_datetime(df['終了時刻'])
+        df['終了時刻'] = df['終了時刻'].dt.time
         
         ##########
         # 列を並び替え
@@ -47,7 +64,7 @@ def molding(w_list):
         
         ##########
         # ファイル出力
-        df.to_csv('/tmp/pandas.csv')
+        df.to_csv('/tmp/pandas_' + EMPLOYEE_NO + '.csv')
         
     except:
-        print("*** molding:ERR ***")
+        logging.critical("pandas.molding:ERR")

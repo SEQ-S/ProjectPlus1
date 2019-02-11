@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+import logging
+import os
+logging.basicConfig(level=os.environ['LOGGING'])
+
 import time
 import datetime
 import pytz
 import json
-import os
 import sys
 import collections
 from sources import single, double, long
@@ -13,6 +16,11 @@ from sources import single, double, long
 def lambda_handler(event, context):
     try:
         ##########
+        # 変数定義
+        w_employee_no = event['placementInfo']['attributes']['EMPLOYEE_NO']
+        w_employee_name = event['placementInfo']['attributes']['EMPLOYEE_NAME']
+
+        ##########
         # 時間設定
         w_localtime = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
         w_time = w_localtime.strftime("%Y-%m-%d %H:%M:%S")
@@ -21,9 +29,6 @@ def lambda_handler(event, context):
         ##########
         # 辞書作成
         # 社員No,社員名,稼働時間、KEY名
-        w_employee_no = event['placementInfo']['attributes']['EMPLOYEE_NO']
-        w_employee_name = event['placementInfo']['attributes']['EMPLOYEE_NAME']
-        
         w_dict = collections.OrderedDict()
         w_dict = {
             'No':w_employee_no,
@@ -40,11 +45,11 @@ def lambda_handler(event, context):
         # リターン
         return {
             'statusCode': 200,
+            'event':json.dumps(event),
             'body': json.dumps("*** lambda_handler:OK ***")
         }
     except:
-        print("*** lambda_handler:ERR ***")
-
+        logging.critical("lambda_handler:ERR")
 
 ##########
 # ボタン振り分け
@@ -53,12 +58,14 @@ def divide_clicktype(event,w_dict):
         ##########
         # クリックタイプ取得
         click_type = event['deviceEvent']['buttonClicked']['clickType']
+
+        ##########
+        # 振り分け
         if click_type == 'SINGLE':
-            single.single(w_dict)
+            single.single(event,w_dict)
         elif click_type == 'DOUBLE':
-            double.double(w_dict)
+            double.double(event,w_dict)
         elif click_type == 'LONG':
-            long.long(w_dict)
+            long.long(event,w_dict)
     except:
-        print("*** divide_clicktype:ERR ***")
-        
+        logging.critical("divide_clicktype:ERR")

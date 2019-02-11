@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import logging
+import os
+logging.basicConfig(level=os.environ['LOGGING'])
+
 import json
 import boto3
 import collections
@@ -7,11 +11,11 @@ from sources import asw_s3,slack
 
 ##########
 # ダブル押下時
-def double(w_dict):
+def double(event, w_dict):
     try:
         ##########
         # S3からダウンロード
-        rtn_dict = asw_s3.get_s3(w_dict)
+        rtn_dict = asw_s3.get_s3(event, w_dict)
 
         ##########
         # 時間差異
@@ -40,11 +44,11 @@ def double(w_dict):
         
         ##########
         # S3にアップロード
-        asw_s3.put_s3(s3_dict)
+        asw_s3.put_s3(event, s3_dict)
         
         ##########
         # slackに通知
-        slack.finish(s3_dict)
+        slack.finish(event, s3_dict)
         
     except:
-        print("*** double:ERR ***")
+        logging.critical("double.double:ERR")
