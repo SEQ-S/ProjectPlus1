@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
+import logging
+import os
+logging.basicConfig(level=os.environ['LOGGING'])
+
 import ast
 import json
 import boto3
-import os
-
-##########
-# バゲットの名前
-bucket_name = os.environ['S3_BUCKET']
 
 ##########
 # S3にアップロード（高LV API）
-def put_s3(w_dict):
+def put_s3(event, w_dict):
     try:
+        ##########
+        # 変数定義
+        S3_BUCKET = event['placementInfo']['attributes']['S3_BUCKET']
+        
         ##########        
         # AWSサービスの設定
         s3 = boto3.resource('s3')
@@ -26,6 +29,7 @@ def put_s3(w_dict):
         # 　　　　│　　└─　KEY(YYYYMMDDHHMMSS)
         # 　　　　└─　TOTAL
         # 　　　　　　　└─　KEY(YYYYMMDDHHMMSS)
+        logging.info("aws_s3.put_s3:030")
         key_name = w_dict['Key_name'][0:6] + '/' + w_dict['No'] + '/' + w_dict['Status'] + '/' + w_dict['Key_name']
 
         ##########
@@ -34,26 +38,30 @@ def put_s3(w_dict):
         
         ##########
         # オブジェクトのFULL_PATH設定
-        obj_path = s3.Object(bucket_name, key_name)
+        obj_path = s3.Object(S3_BUCKET, key_name)
 
         ##########
         # ファイルアップ
         response = obj_path.put(Body=body_data)
     except:
-        print("*** put_s3:ERR ***")
+        logging.critical("aws_s3.put_s3:ERR")
 
 
 ##########
 # S3からダウンロード（高LV API）
-def get_s3(w_dict):
+def get_s3(event, w_dict):
     try:
+        ##########
+        # 変数定義
+        S3_BUCKET = event['placementInfo']['attributes']['S3_BUCKET']
+        
         ##########
         # AWSサービスの設定
         s3 = boto3.resource('s3')
 
         ##########
         # バゲットの情報取得
-        bucket = s3.Bucket(bucket_name)
+        bucket = s3.Bucket(S3_BUCKET)
         
         ##########
         # バゲットにあるKEYを取得
@@ -71,7 +79,7 @@ def get_s3(w_dict):
         
         ##########
         # KEYの情報取得
-        obj = s3.Object(bucket_name, key_name)
+        obj = s3.Object(S3_BUCKET, key_name)
 
         ##########
         # KEYの情報取得
@@ -90,22 +98,24 @@ def get_s3(w_dict):
         # return
         return rtn_dict
     except:
-        print("*** get_s3:ERR ***")
-
-
+        logging.critical("aws_s3.get_s3:ERR")
 
 
 ##########
 # S3からダウンロード（高LV API）
-def get_s3_all(w_dict):
+def get_s3_all(event, w_dict):
     try:
+        ##########
+        # 変数定義
+        S3_BUCKET = event['placementInfo']['attributes']['S3_BUCKET']
+        
         ##########
         # AWSサービスの設定
         s3 = boto3.resource('s3')
         
         ##########
         # バゲットの情報取得
-        bucket = s3.Bucket(bucket_name)
+        bucket = s3.Bucket(S3_BUCKET)
         
         ##########
         # バゲットにあるKEYを取得
@@ -128,7 +138,7 @@ def get_s3_all(w_dict):
             
             ##########
             # KEYの情報取得
-            obj = s3.Object(bucket_name, key_name)
+            obj = s3.Object(S3_BUCKET, key_name)
             
             ##########
             # KEYの情報取得
@@ -152,4 +162,4 @@ def get_s3_all(w_dict):
         return dict_list
         
     except:
-        print("*** get_s3_all:ERR ***")
+        logging.critical("aws_s3.get_s3_all:ERR")

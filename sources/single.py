@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import logging
+import os
+logging.basicConfig(level=os.environ['LOGGING'])
+
+import logging
 import json
 import boto3
 import collections
@@ -6,7 +11,7 @@ from sources import asw_s3,slack
 
 ##########
 # シングル押下時
-def single(w_dict):
+def single(event, w_dict):
     try:
         ##########
         # 辞書作成
@@ -24,10 +29,10 @@ def single(w_dict):
         }
         ##########
         # S3にアップロード
-        asw_s3.put_s3(s3_dict)
+        asw_s3.put_s3(event, s3_dict)
         
         ##########
         # slackに通知
-        slack.begin(s3_dict)
+        slack.begin(event, s3_dict)
     except:
-        print("*** single:ERR ***")
+        logging.critical("single.single:ERR")
